@@ -1,0 +1,50 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using RebornFrame.Core;
+using FairyGUI;
+using HybridCLR;
+using System.IO;
+
+public class AppInit : IDataInit
+{
+     List<string> aotDllList = new List<string>
+    {
+        // "mscorlib.dll",
+        // "System.dll",
+        // "System.Core.dll",
+    };
+    
+    public override void LoadLaunchUI(string sceneName)
+    {
+        
+    }
+    public override void Awake()
+    {
+    
+     #if !UNITY_EDITOR
+            //加载AOT
+            foreach (var aotDllName in aotDllList)
+            {
+                var dllPath = $"{AppInstance.Instance.CustomUpdateLauncher.GetABRootPath(aotDllName)}{aotDllName}";
+                if (dllPath.StartsWith(Application.streamingAssetsPath))
+                {
+                    WWW dbPath = new WWW(dllPath);
+                    while (!dbPath.isDone) {}
+                    LoadImageErrorCode err = HybridCLR.RuntimeApi.LoadMetadataForAOTAssembly(dbPath.bytes, HomologousImageMode.SuperSet);
+                    Debug.Log($"LoadMetadataForAOTAssembly:{aotDllName}. ret:{err}");
+                }
+                else
+                {
+                    byte[] dllBytes = File.ReadAllBytes(dllPath);
+                    LoadImageErrorCode err = HybridCLR.RuntimeApi.LoadMetadataForAOTAssembly(dllBytes, HomologousImageMode.SuperSet);
+                    Debug.Log($"LoadMetadataForAOTAssembly:{aotDllName}. ret:{err}");
+                }
+            }
+     #endif
+            
+        Application.targetFrameRate = 240;
+        
+        FGUIPanelManager.Instance.LoadPackage("PackageCommon",99999);
+    }
+}

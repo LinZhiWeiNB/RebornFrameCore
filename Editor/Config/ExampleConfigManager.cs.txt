@@ -1,0 +1,77 @@
+﻿using System.Collections.Generic;
+using UnityEngine;
+
+namespace Com.Study.Blog.Protobuf
+{
+    public partial class Example
+    {
+        public static Dictionary<int, Com.Study.Blog.Protobuf.Example> DataDict =
+            new Dictionary<int, Com.Study.Blog.Protobuf.Example>();
+
+        public static List<Com.Study.Blog.Protobuf.Example> DataList = new List<Com.Study.Blog.Protobuf.Example>();
+
+        public static readonly string file = "Example";
+
+        public static bool Init()
+        {
+            byte[] ms = DataConfigManager.LoadData(file);
+            Example_ARRAY ARRAY = Example_ARRAY.Parser.ParseFrom(ms);
+            if (ARRAY == null)
+            {
+                Debug.LogError($"[----------------{file}.tblc is not matching----------------]" );
+                return false;
+            }
+
+            DataDict.Clear();
+            DataList.Clear();
+            foreach (var temp in ARRAY.Items)
+            {
+                if (DataDict.ContainsKey(temp.ID))
+                {
+                    Debug.LogError($"[----------------ID has already exist! File:{file}.tblc ID:{temp.ID}----------------]");
+                }
+                else
+                {
+                    DataDict.Add(temp.ID, temp);
+                    DataList.Add(temp);
+                }
+            }
+
+            return true;
+        }
+
+        public static Com.Study.Blog.Protobuf.Example GetData(int id)
+        {
+            if (id == 0)
+            {
+                return null;
+            }
+
+            if (DataDict.ContainsKey(id))
+            {
+                return DataDict[id];
+            }
+            else
+            {
+                Debug.LogError($"[----------策划表格配置错误！File:{file}.tblc ID:{id}----------------]");
+                return null;
+            }
+        }
+
+        public static Com.Study.Blog.Protobuf.Example GetDataByIndex(int index)
+        {
+            if (index < 0 || DataList.Count <= index)
+            {
+                Debug.LogError($"[----------策划表格读取错误,超出索引范围！File:{file}.tblc ID:{index}----------------]");
+                return null;
+            }
+
+            return DataList[index];
+        }
+
+        public static IEnumerator<Com.Study.Blog.Protobuf.Example> GetAllData()
+        {
+            return DataDict.Values.GetEnumerator();
+        }
+    }
+}

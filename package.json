@@ -1,0 +1,22 @@
+{
+  "name": "com.reborn.reborncore",
+  "displayName": "RebornCore",
+  "version": "1.0.0",
+  "unity": "2021.3",
+  "description": "Reborn框架核心\n有问题请联系 林志威",
+  "type": "library",
+  "hideInEditor": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LinZhiWeiNB/RebornFrameCore"
+  },
+  "author": {
+    "name": "Reborn Studio",
+    "email": "435554532@qq.com",
+    "url": "https://github.com/LinZhiWeiNB"
+  },
+  "dependencies": {
+    "com.reborn.utils": "1.0.0"
+  }
+}

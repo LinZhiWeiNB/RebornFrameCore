@@ -1,0 +1,258 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Reflection;
+using RebornFrame.Core;
+using UnityEngine;
+
+public class AppUpdate : UpdateLauncher
+{
+   #if DEVELOPMENT
+       public const string Branch = "main";
+       public const string DownloadPath =
+           "http://carinno.icu:666/Group/Product/-/raw/{0}/{1}?inline=false";
+   #elif RELEASE_TEST
+       public const string Branch = "releaseTest";
+       public const string DownloadPath =
+           "http://carinno.icu:666/Group/Product/-/raw/{0}/{1}?inline=false";
+   #elif RELEASE
+       public const string Branch = "release";
+       public const string DownloadPath =
+           "http://carinno.icu:666/Group/Product/-/raw/{0}/{1}?inline=false";
+   #else
+       public const string Branch = "main";
+       public const string DownloadPath =
+           "http://carinno.icu:666/Group/Product/-/raw/{0}/{1}?inline=false";
+   #endif
+
+    public FileMD5 FileMD5;
+    public Dictionary<string, bool> FirstVersion = new Dictionary<string, bool>();
+    public Assembly HotUpdateAssembly;
+    public string Version;
+    private string streamingHotUpdatePath;
+    private string persistentHotUpdatePath;
+	
+    public override void Awake()
+    {
+        streamingHotUpdatePath = Path.Combine(Application.streamingAssetsPath , "HotUpdate") + Path.DirectorySeparatorChar;
+        persistentHotUpdatePath =  Path.Combine(Application.persistentDataPath , "HotUpdate") + Path.DirectorySeparatorChar;
+        //先确定应用版本是否是新的，如果是新的应用，就要删除所有更新包
+        var appVersion = PlayerPrefs.GetString("AppVersion", "");
+        if (appVersion != Application.version)
+        {
+            Debug.Log($"应用本体更新，旧版本{appVersion}，新版本{Application.version}");
+            //删除所有下载的更新包
+            if (Directory.Exists(Application.persistentDataPath))
+            {
+                var files = Directory.GetFiles(Application.persistentDataPath);
+                for (var i = 0; i < files.Length; i++)
+                {
+                    File.Delete(files[i]);
+                    Debug.Log($"删除文件{files[i]}");
+                }
+            }
+        }
+
+        PlayerPrefs.SetString("AppVersion", Application.version);
+
+
+        string json = "";
+        
+        #if !UNITY_EDITOR
+        if (File.Exists(persistentHotUpdatePath + "filemd5.json"))
+        {
+            json = File.ReadAllText(persistentHotUpdatePath + "filemd5.json");
+        }
+        else
+        {
+            WWW dbPath = new WWW(streamingHotUpdatePath + "filemd5.json");
+            while (!dbPath.isDone) { }
+            json = dbPath.text;
+            //去掉BOM头
+            if (dbPath.bytes != null && dbPath.bytes[0] == 0xEF && dbPath.bytes[1] == 0xBB && dbPath.bytes[2] == 0xBF)
+            {
+                json = json.Substring(1);
+            }
+        }
+        #else
+        json = File.ReadAllText(streamingHotUpdatePath + "filemd5.json");
+        #endif
+        FileMD5 = JsonUtility.FromJson<FileMD5>(json);
+
+        Debug.Log("新资源目录："+persistentHotUpdatePath + "version.txt");
+    }
+
+    public override void PullUpdate()
+    {
+        var serverVersionPath = persistentHotUpdatePath + "serverVersion.txt";
+        bool needUpdate = false;
+        Debug.Log($"开始更新version.txt: {string.Format(DownloadPath, Branch, "version.txt")}");
+        //下载version
+        try
+        {
+            HttpDownloadFile(string.Format(DownloadPath, Branch, "version.txt"), serverVersionPath);
+            Debug.Log("下载服务端version完成");
+            var serverFileMD5 = File.ReadAllText(serverVersionPath);
+            needUpdate = serverFileMD5 != Version;
+        }
+        catch (Exception e)
+        {
+            Debug.LogError(e);
+        }
+        
+   #if !UNITY_EDITOR
+        if (File.Exists(persistentHotUpdatePath + "version.txt"))
+        {
+            Version = File.ReadAllText(persistentHotUpdatePath + "version.txt");
+        }
+        else
+        {
+            WWW dbPath = new WWW(streamingHotUpdatePath + "version.txt");
+            while (!dbPath.isDone) { }
+            Version = dbPath.text;
+            //去掉BOM头
+            if (dbPath.bytes != null && dbPath.bytes[0] == 0xEF && dbPath.bytes[1] == 0xBB && dbPath.bytes[2] == 0xBF)
+            {
+                Version = Version.Substring(1);
+            }
+        }
+        #else
+        Version = File.ReadAllText(streamingHotUpdatePath + "version.txt");
+        #endif
+
+        if (needUpdate)
+        {
+            var versionPath = persistentHotUpdatePath + "version.txt";
+            if (File.Exists(versionPath))
+                File.Delete(versionPath);
+            File.Move(serverVersionPath, versionPath);
+
+            Debug.Log("开始更新");
+
+
+            var serverMD5JsonPath = persistentHotUpdatePath + "serverFileMD5.json";
+            //下载MD5文件
+            try
+            {
+                HttpDownloadFile(string.Format(DownloadPath,Branch,"filemd5.json"), serverMD5JsonPath);
+                Debug.Log("下载服务端fileMD5完成");
+
+                //打开文件
+                var serverFileMD5 = JsonUtility.FromJson<FileMD5>(File.ReadAllText(serverMD5JsonPath));
+
+                if (FileMD5.AppVersion != serverFileMD5.AppVersion)
+                {
+                    //寻找差异并下载
+                    for (var i = 0; i < serverFileMD5.Files.Count; i++)
+                    {
+                        var fileName = serverFileMD5.Files[i];
+
+                        var path = persistentHotUpdatePath + fileName;
+
+                        if (!FileMD5.Files.Contains(fileName) || !FileMD5.MD5[FileMD5.Files.IndexOf(fileName)].Equals(serverFileMD5.MD5[i]))
+                        {
+                            Debug.Log($"发现差异文件{fileName}");
+                            //下载
+                            if (File.Exists(path))
+                                File.Delete(path);
+                            HttpDownloadFile(string.Format(DownloadPath,Branch,fileName), path);
+                        }
+                    }
+                }
+
+                var fileMD5Path = persistentHotUpdatePath + "filemd5.json";
+                if (File.Exists(fileMD5Path))
+                    File.Delete(fileMD5Path);
+                File.Move(serverMD5JsonPath, fileMD5Path);
+                FileMD5 = serverFileMD5;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+            }
+
+        }
+
+
+        for (var i = 0; i < FileMD5.Files.Count; i++)
+        {
+            #if !UNITY_EDITOR
+            FirstVersion.Add(FileMD5.Files[i], !File.Exists(persistentHotUpdatePath + FileMD5.Files[i]));
+            #else
+            FirstVersion.Add(FileMD5.Files[i], true);
+            #endif
+        }
+
+        #if !UNITY_EDITOR
+        var dllPath = $"{GetABRootPath("HotUpdate.dll")}HotUpdate.dll";
+        if (FirstVersion["HotUpdate.dll"])
+        {
+            WWW dbPath = new WWW(dllPath);
+            while (!dbPath.isDone) {}
+            HotUpdateAssembly = Assembly.Load(dbPath.bytes);
+        }
+        else
+        {
+            HotUpdateAssembly = Assembly.Load(File.ReadAllBytes(dllPath));
+        }
+        #else
+        // Editor下无需加载，直接查找获得HotUpdate程序集
+        HotUpdateAssembly = System.AppDomain.CurrentDomain.GetAssemblies().First(a => a.GetName().Name == "HotUpdate");
+        #endif
+
+        AppInstance.Instance.InitData(HotUpdateAssembly);
+    }
+
+
+    /// <summary>
+    /// Http下载文件
+    /// </summary>
+    public static void HttpDownloadFile(string url, string path)
+    {
+        // 设置参数
+        HttpWebRequest request = WebRequest.Create(url) as HttpWebRequest;
+        request.Timeout = 1500;
+        //发送请求并获取相应回应数据
+        HttpWebResponse response = null;
+        //直到request.GetResponse()程序才开始向目标网页发送Post请求
+        response = request.GetResponse() as HttpWebResponse;
+        if (response != null)
+        {
+            Stream responseStream = response.GetResponseStream();
+            //创建本地文件写入流
+            if (Directory.Exists(Path.GetDirectoryName(path)))
+            {
+                if (File.Exists(path))
+                    File.Delete(path);
+            }
+            else
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(path));
+            }
+            Stream stream = new FileStream(path, FileMode.Create);
+            byte[] bArr = new byte[1024];
+            int size = responseStream.Read(bArr, 0, (int)bArr.Length);
+            while (size > 0)
+            {
+                stream.Write(bArr, 0, size);
+                size = responseStream.Read(bArr, 0, (int)bArr.Length);
+            }
+            stream.Close();
+            responseStream.Close();  
+        }
+    }
+
+    public override string GetABRootPath(string assetsID)
+    {
+        if (FirstVersion.ContainsKey(assetsID))
+            return Path.Combine(FirstVersion[assetsID] ? Application.streamingAssetsPath  : Application.persistentDataPath , "HotUpdate") + Path.DirectorySeparatorChar;
+        else
+        {
+            Debug.LogError($"AB包【{assetsID}】不存在");
+            return Path.Combine(Application.streamingAssetsPath , "HotUpdate") + Path.DirectorySeparatorChar;
+        }
+    }
+}

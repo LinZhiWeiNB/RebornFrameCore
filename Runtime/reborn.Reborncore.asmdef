@@ -1,0 +1,14 @@
+{
+    "name": "reborn.Reborncore",
+    "rootNamespace": "",
+    "references": ["reborn.utils","carinno.errorlog"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

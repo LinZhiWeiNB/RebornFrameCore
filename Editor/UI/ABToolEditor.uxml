@@ -1,0 +1,31 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement style="height: 100%; max-height: 100%; min-height: 100%; flex-direction: column; align-items: stretch; flex-wrap: nowrap; flex-basis: 100%; width: 100%;">
+        <ui:ScrollView name="ScrollView" style="flex-direction: column; align-items: stretch; height: 50%; min-height: 50%; max-height: 50%; flex-grow: 1; flex-wrap: nowrap; flex-shrink: 1; flex-basis: 100%; position: relative;" />
+        <ui:Label display-tooltip-when-elided="true" style="border-top-width: 0; border-bottom-width: 2px; border-bottom-color: rgb(80, 80, 80); border-left-color: rgb(80, 80, 80); border-right-color: rgb(80, 80, 80); border-top-color: rgb(80, 80, 80);" />
+        <ui:TextField picking-mode="Ignore" label="热更DLL文件路径" name="DLLPath" value="../HybridCLRData/HotUpdateDlls/Android/HotUpdate.dll" />
+        <ui:Label tabindex="-1" text="AOT DLL" parse-escape-sequences="true" display-tooltip-when-elided="true" />
+        <ui:ScrollView name="AddtionalDLL" style="min-height: 100px; max-height: 100px; height: 100px;" />
+        <ui:VisualElement style="flex-direction: row; flex-basis: auto; flex-wrap: nowrap; height: 60px;">
+            <ui:Button text="拷贝DLL文件" display-tooltip-when-elided="true" name="CopyDll" style="height: 25px; width: 102px; white-space: normal; -unity-text-align: upper-center; position: relative; right: auto; align-items: flex-end; justify-content: flex-start; margin-right: 3px;" />
+        </ui:VisualElement>
+        <ui:TextField picking-mode="Ignore" label="导出路径" name="OutPutPath" value="StreamingAssets/HotUpdate" />
+        <ui:VisualElement style="flex-direction: row;">
+            <ui:Button text="清理导出文件夹" display-tooltip-when-elided="true" name="ClearBuild" style="height: 25px; width: 102px; white-space: normal; -unity-text-align: upper-center; position: relative; right: auto; align-items: flex-end; justify-content: flex-start; margin-right: 3px;" />
+            <ui:Button text="[1]全部导出" display-tooltip-when-elided="true" name="ExportAll" style="height: 25px; width: 102px; white-space: normal; -unity-text-align: upper-center; position: relative; right: auto; align-items: flex-end; justify-content: flex-start; margin-right: 3px; color: rgb(255, 72, 0);" />
+        </ui:VisualElement>
+        <ui:Label display-tooltip-when-elided="true" style="border-top-width: 0; border-bottom-width: 2px; border-bottom-color: rgb(80, 80, 80); border-left-color: rgb(80, 80, 80); border-right-color: rgb(80, 80, 80); border-top-color: rgb(80, 80, 80);" />
+        <ui:DropdownField label="分支" index="-1" name="BranchDropDown" style="height: 28px; align-items: center; -unity-text-align: upper-left; font-size: 15px; -unity-font-style: bold;" />
+        <ui:TextField picking-mode="Ignore" label="服务器Version下载地址" name="ServerVersionPath" />
+        <ui:TextField picking-mode="Ignore" label="服务器MD5下载地址" name="ServerMD5Path" />
+        <ui:VisualElement style="flex-direction: row;">
+            <ui:Button text="下载服务器Version文件" display-tooltip-when-elided="true" name="DownloadServerVersion" style="height: 25px; width: 158px; white-space: normal; -unity-text-align: upper-center; position: relative; right: auto; align-items: flex-end; justify-content: flex-start; margin-right: 3px;" />
+            <ui:Button text="下载服务器MD5" display-tooltip-when-elided="true" name="DownloadServerMD5" style="height: 25px; width: 158px; white-space: normal; -unity-text-align: upper-center; position: relative; right: auto; align-items: flex-end; justify-content: flex-start; margin-right: 3px;" />
+        </ui:VisualElement>
+        <ui:Label display-tooltip-when-elided="true" style="border-top-width: 0; border-bottom-width: 2px; border-bottom-color: rgb(80, 80, 80); border-left-color: rgb(80, 80, 80); border-right-color: rgb(80, 80, 80); border-top-color: rgb(80, 80, 80);" />
+        <ui:TextField picking-mode="Ignore" label="差异预览文件夹" name="ComparePath" />
+        <ui:VisualElement style="flex-direction: row; height: 43px;">
+            <ui:Button text="差异对比" display-tooltip-when-elided="true" name="Compare" style="height: 25px; width: 158px; white-space: normal; -unity-text-align: upper-center; position: relative; right: auto; align-items: flex-end; justify-content: flex-start; margin-right: 3px;" />
+            <ui:Button text="[2]发布首包" display-tooltip-when-elided="true" name="FirstVersion" style="height: 25px; width: 158px; white-space: normal; -unity-text-align: upper-center; position: relative; right: auto; align-items: flex-end; justify-content: flex-start; margin-right: 3px; color: rgb(255, 72, 0);" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
